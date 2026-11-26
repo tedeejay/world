@@ -7,6 +7,7 @@ import * as auth from './auth.js';
 import * as home from './home.js';
 import * as memories from './memories.js';
 import * as chat from './chat.js';
+import * as streak from './streak.js';
 import { startHearts } from './fx.js';
 
 initFirebase(CONFIG.firebase);
@@ -47,10 +48,11 @@ bus.on('unlock', room => {
   home.start();
   memories.start();
   chat.start();
+  streak.start();
 });
 bus.on('lock', prevRoom => {
   hearts.pause();
-  home.stop(); memories.stop(); chat.stop(prevRoom);
+  home.stop(); memories.stop(); chat.stop(prevRoom); streak.stop();
   state.tab = 'home';
 });
 

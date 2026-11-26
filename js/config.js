@@ -3,6 +3,7 @@
    ═══════════════════════════════════════════════════════════ */
 export const CONFIG = {
   appUrl: 'https://tedeejay.github.io/Jay-Dee/',
+  streakNeedsBoth: false,                 // false: any message/letter keeps the streak; true: both of you must send each day
   togetherSince: '2026-10-03',            // YYYY-MM-DD
   logo: 'https://cdn.dbimg.app/Q7cRoVmy.png',
   lockBg: 'https://cdn.dbimg.app/baOgBUVC.jpg',

@@ -136,3 +136,14 @@
   .lb-prev{left:8px}.lb-next{right:8px}
   .hero{min-height:300px}
 }
+
+/* ═══ STREAK ═══ */
+.streak-week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px}
+.sd{display:grid;justify-items:center;gap:4px}
+.sd i{width:100%;max-width:40px;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09)}
+.sd span{font-size:.64rem;color:var(--muted)}
+.sd.on i{background:linear-gradient(135deg,rgba(255,158,194,.35),rgba(255,122,168,.2));border-color:rgba(255,158,194,.6)}
+.sd.today i{box-shadow:0 0 0 2px var(--pink)}
+.card--streak.is-lit{border-color:rgba(255,158,194,.5);box-shadow:0 20px 54px rgba(255,120,170,.22)}
+.card--streak.is-lit .ms b{text-shadow:0 0 22px rgba(255,120,170,.7)}
+.card--streak.is-risk .ms-foot span:last-child{color:#ffb3c6;font-weight:600}

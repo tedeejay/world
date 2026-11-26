@@ -156,7 +156,7 @@ function sigOf(m) {
   return [m.type, m.type === 'voice' ? m.id : m.text, m.edited ? 1 : 0, JSON.stringify(m.reactions), editingId === m.id ? 'E' : '', isOwn(m) ? 1 : 0, m.ts].join('|');
 }
 
-function renderAll() { renderChat(); renderLetters(); }
+function renderAll() { renderChat(); renderLetters(); bus.emit('messages', messages); }
 
 function renderChat() {
   const tl = $('#msgTimeline');
