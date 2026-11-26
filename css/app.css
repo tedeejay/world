@@ -250,3 +250,31 @@ button,.tile,.cell,.chip{touch-action:manipulation}
 .tod__a{font-size:.95rem;margin-top:6px;white-space:pre-wrap;overflow-wrap:anywhere}
 .tod__hist summary{cursor:pointer;text-align:center;font-size:.8rem;color:var(--muted);padding:6px}
 .tod__histlist{display:grid;gap:10px;margin-top:10px}
+
+/* ═══ TWO TRUTHS & A LIE ═══ */
+.ttl{max-width:460px;margin:0 auto;display:grid;gap:16px}
+.ttl [hidden]{display:none!important}
+.ttl__write{display:grid;gap:12px}
+.ttl__row{display:grid;gap:6px}
+.ttl__tag{justify-self:start;padding:3px 11px;border-radius:999px;font-size:.68rem;font-weight:700;letter-spacing:.08em;background:rgba(255,255,255,.1);color:var(--muted)}
+.ttl__tag.is-lie{background:rgba(255,158,194,.2);color:var(--pink-soft)}
+.tod__input.ttl__field{min-height:64px;resize:none}
+.ttl__list{display:grid;gap:12px}
+.ttl__opts{display:grid;gap:12px}
+.ttl__opt{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;padding:16px 18px;border-radius:18px;background:var(--glass);border:1px solid var(--stroke);color:#fff;font-size:1rem;line-height:1.4;transition:background .25s,border-color .25s,box-shadow .25s}
+.ttl__text{min-width:0;overflow-wrap:anywhere}
+.ttl__badge{flex-shrink:0;padding:3px 10px;border-radius:999px;font-size:.62rem;font-weight:700;letter-spacing:.08em;background:rgba(255,255,255,.14);color:#fff}
+.ttl__opt.can{cursor:pointer}
+@media(hover:hover) and (pointer:fine){.ttl__opt.can:hover{border-color:var(--pink);background:rgba(255,158,194,.12)}}
+.ttl__opt.can:active{border-color:var(--pink);background:rgba(255,158,194,.2)}
+.ttl__opt[aria-disabled="true"]{cursor:default}
+/* result: green = the lie (the right answer), red = a wrong pick */
+.ttl__opt.is-correct{background:rgba(74,222,128,.2);border-color:#4ade80;box-shadow:0 0 24px rgba(74,222,128,.38);animation:pop .4s var(--ease)}
+.ttl__opt.is-wrong{background:rgba(255,92,112,.2);border-color:#ff6b81;box-shadow:0 0 24px rgba(255,92,112,.38);animation:pop .4s var(--ease)}
+.ttl__opt.is-correct .ttl__badge{background:#4ade80;color:#06240f}
+.ttl__opt.is-wrong .ttl__badge{background:#ff6b81;color:#2a0610}
+.ttl__result{display:grid;gap:14px}
+.ttl__msg{text-align:center;font-family:var(--font-display);font-size:1.15rem;font-weight:600}
+.ttl__msg.is-good{color:#4ade80}
+.ttl__line{font-size:.86rem;margin-top:6px;overflow-wrap:anywhere}
+.ttl__line.is-lie{color:var(--pink-soft);font-weight:600}
