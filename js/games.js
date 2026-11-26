@@ -1,10 +1,12 @@
-/* Games tab: a hub plus realtime tic-tac-toe (Firestore doc games/tictactoe; in-memory hot-seat in demo mode). */
+/* Games tab: a hub plus realtime tic-tac-toe (Firestore doc games/tictactoe; in-memory hot-seat in demo mode).
+   Truth or Dare lives in tod.js and is mounted into #todView from here. */
 import { CONFIG } from './config.js';
 import * as fb from './firebase.js';
 import { $, h, toast, confirmDialog } from './utils.js';
 import { state, bus } from './state.js';
 import { confetti } from './fx.js';
 import * as T from './tictactoe-logic.js';
+import * as tod from './tod.js';
 
 let game = null, unsub = null, wired = false, view = 'hub', loaded = false, loadError = false, celebrated = -1, busy = false;
 const el = { cells: [] };
@@ -36,21 +38,32 @@ async function mutate(fn) {
   });
   return applied;
 }
+const withTimeout = (p, ms = 10000) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
 async function run(fn, failMsg) {
   if (busy || !game) return;
   busy = true; paint();
   try {
-    if (!(await mutate(fn))) toast('That isn’t available right now', 'error');
+    if (!(await withTimeout(mutate(fn)))) toast('That isn’t available right now', 'error');
   } catch (e) {
-    toast(e && e.code === 'permission-denied' ? 'Firestore rules are blocking games. Add a rule for the "games" collection.' : failMsg || 'Could not save. Check your connection.', 'error');
+    toast(e && e.code === 'permission-denied' ? 'Firestore rules are blocking games. Add a rule for the "games" collection.'
+      : e && e.message === 'timeout' ? 'Taking too long. Check your connection and try again.'
+      : failMsg || 'Could not save. Check your connection.', 'error');
   }
   busy = false; paint();
 }
 
 /* ── actions ── */
 const myTurnNow = () => game && !game.winner && (fb.ready ? game.turn === room().id : true);
+function nudge() {
+  if (!el.board) return;
+  el.board.classList.remove('shake'); void el.board.offsetWidth; el.board.classList.add('shake');
+  setTimeout(() => el.board && el.board.classList.remove('shake'), 450);
+}
 function play(i) {
-  if (!myTurnNow()) return;
+  if (busy || !game) return;
+  if (game.winner) { toast('Round finished. Tap “Play again” 🎉'); return; }
+  if (!myTurnNow()) { nudge(); toast('Not your turn yet. Waiting for ' + room().partner + '…'); return; }
+  if (game.board[i]) { nudge(); toast('That spot is taken'); return; }
   const who = fb.ready ? room().id : game.turn;
   run(g => T.applyMove(g, who, i));
 }
@@ -83,7 +96,7 @@ function buildView() {
       h('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => { view = 'hub'; paint(); } }, '← Games'),
       h('h3', null, 'Tic-Tac-Toe')),
     el.status, score,
-    h('div', { class: 'ttt__board' }, el.cells),
+    (el.board = h('div', { class: 'ttt__board' }, el.cells)),
     h('div', { class: 'ttt__actions' }, el.again, el.restart),
     h('div', { class: 'ttt__marks' }, el.marksHint, h('div', { class: 'chips' }, el.chips)),
     h('div', { class: 'ttt__actions' }, h('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: wipeScores }, 'Reset scores'))));
@@ -95,7 +108,7 @@ function statusText() {
   if (game.winner === 'draw') return 'It’s a draw 🤝';
   if (game.winner) return fb.ready ? (game.winner === me ? 'You won! 🎉' : room().partner + ' won this round') : nameOf(game.winner).replace('You', room().name) + ' won! 🎉';
   if (!fb.ready) return 'Demo mode: ' + (game.turn === me ? room().name : room().partner) + '’s turn';
-  return game.turn === me ? 'Your turn' : 'Waiting for ' + room().partner + '…';
+  return game.turn === me ? 'Your turn' : 'Waiting for ' + room().partner + '… 💞';
 }
 
 function paint() {
@@ -115,11 +128,15 @@ function paint() {
     : (game.winner ? 'Round finished · tap to play again' : turnMine ? 'Your turn!' : fb.ready ? 'Waiting for ' + room().partner : 'Tap to play')
       + ' · ' + (game.scores[me] || 0) + '–' + (game.scores[pid] || 0);
   const card = $('#openTtt'); if (card) card.classList.toggle('is-turn', turnMine);
+  const todSub = $('#todHubSub'); if (todSub) todSub.textContent = tod.hubText();
+  const todCard = $('#openTod'); if (todCard) todCard.classList.toggle('is-turn', tod.myTurn());
   const badge = $('#gameBadge');
-  if (badge) { const n = turnMine && state.tab !== 'games' ? 1 : 0; badge.textContent = n; badge.classList.toggle('show', n > 0); }
+  if (badge) { const n = state.tab !== 'games' ? (turnMine ? 1 : 0) + (tod.myTurn() ? 1 : 0) : 0; badge.textContent = n; badge.classList.toggle('show', n > 0); }
 
-  $('#gamesHub').hidden = view !== 'ttt' ? false : true;
+  $('#gamesHub').hidden = view !== 'hub';
   $('#tttView').hidden = view !== 'ttt';
+  $('#todView').hidden = view !== 'tod';
+  if (view === 'tod') tod.paint();
   if (view !== 'ttt') return;
 
   el.status.textContent = statusText();
@@ -135,9 +152,10 @@ function paint() {
     if (c.textContent !== sym) c.textContent = sym;
     c.className = 'cell' + (who ? (who === me ? ' me' : ' them') : '') + (who && isEmoji(sym) ? ' emoji' : '')
       + (!who && canPlay ? ' can' : '') + (game.line && game.line.includes(i) ? ' win' : '');
-    c.disabled = !!who || !canPlay;
+    c.setAttribute('aria-disabled', String(!!who || !canPlay));
     c.dataset.ghost = markOf(fb.ready ? me : game.turn);
   });
+  el.board.classList.toggle('is-wait', !game.winner && !canPlay && !busy);
   el.again.hidden = !game.winner;
   el.restart.hidden = !!game.winner || !game.board.some(Boolean);
 
@@ -154,7 +172,9 @@ function wire() {
   if (wired) return;
   wired = true;
   buildView();
+  tod.build(() => { view = 'hub'; paint(); });
   $('#openTtt').addEventListener('click', () => { view = 'ttt'; paint(); });
+  $('#openTod').addEventListener('click', () => { view = 'tod'; paint(); });
   bus.on('tab', () => paint());
 }
 
@@ -162,6 +182,7 @@ export function start() {
   wire();
   view = 'hub'; loaded = false; loadError = false; celebrated = -1; busy = false;
   game = T.newGame(C(), players());
+  tod.start(paint);
   if (!fb.ready) { loaded = true; paint(); return; }
   unsub = ref().onSnapshot(doc => {
     game = T.normalize(doc.exists ? doc.data() : null, C(), players());
@@ -176,6 +197,7 @@ export function start() {
 
 export function stop() {
   if (unsub) unsub(); unsub = null;
+  tod.stop();
   game = null; view = 'hub'; loaded = false;
   const badge = $('#gameBadge'); if (badge) { badge.textContent = '0'; badge.classList.remove('show'); }
 }

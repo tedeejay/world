@@ -218,3 +218,35 @@ button,.tile,.cell,.chip{touch-action:manipulation}
 .cell[aria-disabled="true"]{cursor:default}
 .ttt__board.is-wait .cell:not(.me):not(.them){opacity:.5}
 .ttt__board{transition:opacity .2s}
+
+/* ═══ TRUTH OR DARE ═══ */
+.tod{max-width:460px;margin:0 auto;display:grid;gap:16px}
+.tod [hidden]{display:none!important}
+.tod__score{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tod__score div{text-align:center;padding:10px 12px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09)}
+.tod__score b{display:block;font-family:var(--font-display);font-size:1.5rem;color:var(--pink-soft)}
+.tod__score span{font-size:.7rem;color:var(--muted)}
+.tod__label{text-align:center;font-size:.76rem;color:var(--muted);margin-bottom:2px}
+.tod__choose{display:grid;gap:14px}
+.tod__choose .chip{font-size:.9rem;font-family:inherit;padding:0 14px}
+.tod__types{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tod__types .btn{width:100%;padding-left:6px;padding-right:6px;white-space:nowrap}
+.tod__types .btn:disabled{opacity:.35;cursor:not-allowed}
+.tod__card{padding:26px 22px;border-radius:24px;text-align:center;background:var(--glass);border:1px solid var(--stroke);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:var(--shadow-1)}
+.tod__card.flip{animation:pop .45s var(--ease)}
+.tod__card.is-truth{border-color:rgba(255,158,194,.55)}
+.tod__card.is-dare{border-color:rgba(255,150,100,.6)}
+.tod__badge{display:inline-block;margin-bottom:14px;padding:5px 14px;border-radius:999px;font-size:.7rem;font-weight:700;letter-spacing:.08em;background:linear-gradient(135deg,var(--pink),var(--pink-2));color:#2a0f1a}
+.tod__card.is-dare .tod__badge{background:linear-gradient(135deg,#ffb27a,#ff7a8a)}
+.tod__text{font-family:var(--font-display);font-size:1.25rem;line-height:1.45;font-weight:600}
+.tod__answer{display:grid;gap:12px}
+/* 16px font stops iOS from zooming the page when the box is focused */
+.tod__input{width:100%;min-height:92px;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.06);border:1px solid var(--stroke);color:#fff;font:inherit;font-size:16px;line-height:1.4;resize:vertical}
+.tod__input:focus{outline:none;border-color:var(--pink)}
+.tod__last{display:grid;gap:8px}
+.tod__entry{padding:14px 16px;border-radius:18px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09)}
+.tod__meta{font-size:.7rem;letter-spacing:.04em;color:var(--pink-soft);font-weight:600}
+.tod__q{font-size:.82rem;color:var(--muted);margin-top:6px}
+.tod__a{font-size:.95rem;margin-top:6px;white-space:pre-wrap;overflow-wrap:anywhere}
+.tod__hist summary{cursor:pointer;text-align:center;font-size:.8rem;color:var(--muted);padding:6px}
+.tod__histlist{display:grid;gap:10px;margin-top:10px}
