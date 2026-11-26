@@ -135,7 +135,7 @@ function paint() {
 
   $('#gamesHub').hidden = view !== 'hub';
   $('#tttView').hidden = view !== 'ttt';
-  $('#todView').hidden = view !== 'tod';
+  const todView = $('#todView'); if (todView) todView.hidden = view !== 'tod';
   if (view === 'tod') tod.paint();
   if (view !== 'ttt') return;
 
@@ -172,9 +172,13 @@ function wire() {
   if (wired) return;
   wired = true;
   buildView();
-  tod.build(() => { view = 'hub'; paint(); });
   $('#openTtt').addEventListener('click', () => { view = 'ttt'; paint(); });
-  $('#openTod').addEventListener('click', () => { view = 'tod'; paint(); });
+  /* Truth or Dare is optional here: if index.html is stale (no #openTod / #todView) tic-tac-toe must still work */
+  const openTod = $('#openTod');
+  if (openTod && $('#todView')) {
+    tod.build(() => { view = 'hub'; paint(); });
+    openTod.addEventListener('click', () => { view = 'tod'; paint(); });
+  } else console.warn('[OLW] Truth or Dare markup missing from index.html. Replace index.html and clear the cache.');
   bus.on('tab', () => paint());
 }
 

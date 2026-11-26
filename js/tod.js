@@ -78,9 +78,9 @@ function entryNode(e) {
 }
 
 export function build(onBack) {
-  if (built) return;
-  built = true;
   const host = $('#todView');
+  if (built || !host) return;
+  built = true;
   host.replaceChildren();
 
   el.status = h('p', { class: 'ttt__status', role: 'status', 'aria-live': 'polite' });
