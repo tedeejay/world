@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Admin · Jay &amp; Dee</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#1c0f16">
+<link rel="icon" type="image/png" href="https://cdn.dbimg.app/Q7cRoVmy.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="admin">
+<div class="admin-wrap">
+  <div id="gate" class="gate" hidden>
+    <h1>Admin is locked</h1>
+    <p class="muted" style="margin-bottom:20px">Open the app and unlock it as Jay first, then long-press the logo for 2 seconds.</p>
+    <a class="btn btn--primary" href="./">Back to the app</a>
+  </div>
+
+  <div id="panel" hidden>
+    <div class="admin-top">
+      <h1>Memories admin</h1>
+      <a class="btn btn--ghost btn--sm" href="./">← Back to app</a>
+    </div>
+    <div class="conn-banner" id="adminBanner" hidden role="alert"><span>⚠️</span><div id="adminBannerText"></div></div>
+
+    <section class="card admin-card">
+      <h3 style="font-family:var(--font-display);margin-bottom:14px">Add a memory</h3>
+      <div class="field"><label for="fUrl">Image or video URL</label><input id="fUrl" type="url" placeholder="https://…"></div>
+      <div class="form-row">
+        <div class="field"><label for="fCap">Caption</label><input id="fCap" type="text" maxlength="120" placeholder="Our first trip"></div>
+        <div class="field"><label for="fType">Type</label><select id="fType"><option value="image">Photo</option><option value="video">Video</option></select></div>
+        <div class="field"><label for="fOrder">Order</label><input id="fOrder" type="number" value="1"></div>
+      </div>
+      <button class="btn btn--primary" id="addBtn" type="button">Add memory</button>
+    </section>
+
+    <section class="card admin-card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+        <h3 style="font-family:var(--font-display);flex:1">Your memories <span class="muted" id="memCount"></span></h3>
+        <button class="btn btn--ghost btn--sm" id="seedBtn" type="button" hidden>Import the default set</button>
+      </div>
+      <div class="mem-list" id="memList"></div>
+    </section>
+  </div>
+</div>
+
+<dialog class="dialog" id="dialog">
+  <h3 id="dialogTitle"></h3><p id="dialogBody"></p>
+  <div class="dialog__actions">
+    <button class="btn btn--ghost" id="dialogCancel" type="button">Cancel</button>
+    <button class="btn btn--primary" id="dialogOk" type="button">Confirm</button>
+  </div>
+</dialog>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script type="module" src="js/admin.js"></script>
+</body>
+</html>

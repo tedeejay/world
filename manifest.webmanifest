@@ -1,0 +1,16 @@
+{
+  "name": "Jay & Dee",
+  "short_name": "J & D",
+  "description": "Our little world 💞",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1c0f16",
+  "theme_color": "#1c0f16",
+  "icons": [
+    { "src": "https://cdn.dbimg.app/Q7cRoVmy.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "https://cdn.dbimg.app/Q7cRoVmy.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "https://cdn.dbimg.app/Q7cRoVmy.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

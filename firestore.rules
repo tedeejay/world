@@ -1,0 +1,33 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Chat messages, letters and voice notes
+    match /messages/{id} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['from', 'type', 'text', 'ts'])
+                    && request.resource.data.from in ['jay', 'dee']
+                    && request.resource.data.type in ['chat', 'letter', 'voice']
+                    && request.resource.data.text is string
+                    && request.resource.data.text.size() > 0
+                    && request.resource.data.text.size() < 900000
+                    && request.resource.data.ts == request.time;
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'edited', 'reactions'])
+                    && request.resource.data.text is string
+                    && request.resource.data.text.size() < 900000;
+      allow delete: if true;
+    }
+
+    // Read receipts, online status, typing
+    match /presence/{id} {
+      allow read: if true;
+      allow write: if id in ['jay', 'dee'];
+    }
+
+    // Memories gallery (managed from admin.html)
+    match /memories/{id} {
+      allow read: if true;
+      allow write: if true;   // tighten this once you add Firebase Auth — see README
+    }
+  }
+}
