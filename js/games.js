@@ -1,23 +1,39 @@
 /* Games tab: a hub plus realtime tic-tac-toe (Firestore doc games/tictactoe; in-memory hot-seat in demo mode).
-   Truth or Dare (tod.js) and Two Truths & a Lie (twotruths.js) are mounted from the EXTRA list below. */
+   Truth or Dare (tod.js) and Two Truths & a Lie (twotruths.js) are loaded from the EXTRA list below. */
 import { CONFIG } from './config.js';
 import * as fb from './firebase.js';
 import { $, h, toast, confirmDialog } from './utils.js';
 import { state, bus } from './state.js';
 import { confetti } from './fx.js';
 import * as T from './tictactoe-logic.js';
-import * as tod from './tod.js';
-import * as ttl from './twotruths.js';
 
 let game = null, unsub = null, wired = false, view = 'hub', loaded = false, loadError = false, celebrated = -1, busy = false;
 const el = { cells: [] };
 
-/* Extra games mounted from their own modules. Each module exports build/start/stop/paint/myTurn/hubText.
+/* Extra games, each in its own module (build/start/stop/paint/myTurn/hubText). They are loaded with import() on purpose:
+   if one file is missing or stale on the server, only that game is skipped and its card explains why. Nothing else breaks.
    To add one: a card button (open), a hub subtitle span (sub) and a hidden container (view) in index.html. */
 const EXTRA = [
-  { id: 'tod', mod: tod, open: '#openTod', sub: '#todHubSub', view: '#todView' },
-  { id: 'ttl', mod: ttl, open: '#openTtl', sub: '#ttlHubSub', view: '#ttlView' }
+  { id: 'tod', name: 'Truth or Dare', file: './tod.js', open: '#openTod', sub: '#todHubSub', view: '#todView', mod: null, status: 'loading' },
+  { id: 'ttl', name: 'Two Truths & a Lie', file: './twotruths.js', open: '#openTtl', sub: '#ttlHubSub', view: '#ttlView', mod: null, status: 'loading' }
 ];
+const live = () => EXTRA.filter(x => x.status === 'ready');
+let extrasLoading = null, startGen = 0;
+function loadExtras() {
+  if (extrasLoading) return extrasLoading;
+  return (extrasLoading = Promise.all(EXTRA.map(async x => {
+    try {
+      x.mod = await import(x.file);
+      if (!$(x.open) || !$(x.view)) throw new Error('markup missing from index.html');
+      x.mod.build(() => { view = 'hub'; paint(); });
+      x.status = 'ready';
+    } catch (e) {
+      x.status = 'failed';
+      console.warn('[OLW] "' + x.name + '" could not load (' + x.file + '):', e && e.message);
+      const s = $(x.sub); if (s) s.textContent = 'Not loaded. Check the files, then hard refresh.';
+    }
+  })));
+}
 
 const room = () => state.room;
 const players = () => Object.values(CONFIG.rooms).map(r => r.id);
@@ -136,17 +152,17 @@ function paint() {
     : (game.winner ? 'Round finished · tap to play again' : turnMine ? 'Your turn!' : fb.ready ? 'Waiting for ' + room().partner : 'Tap to play')
       + ' · ' + (game.scores[me] || 0) + '–' + (game.scores[pid] || 0);
   const card = $('#openTtt'); if (card) card.classList.toggle('is-turn', turnMine);
-  EXTRA.forEach(x => {
+  live().forEach(x => {
     const s = $(x.sub); if (s) s.textContent = x.mod.hubText();
     const c = $(x.open); if (c) c.classList.toggle('is-turn', x.mod.myTurn());
   });
   const badge = $('#gameBadge');
-  if (badge) { const n = state.tab !== 'games' ? (turnMine ? 1 : 0) + EXTRA.filter(x => x.mod.myTurn()).length : 0; badge.textContent = n; badge.classList.toggle('show', n > 0); }
+  if (badge) { const n = state.tab !== 'games' ? (turnMine ? 1 : 0) + live().filter(x => x.mod.myTurn()).length : 0; badge.textContent = n; badge.classList.toggle('show', n > 0); }
 
   $('#gamesHub').hidden = view !== 'hub';
   $('#tttView').hidden = view !== 'ttt';
   EXTRA.forEach(x => { const v = $(x.view); if (v) v.hidden = view !== x.id; });
-  const active = EXTRA.find(x => x.id === view); if (active) active.mod.paint();
+  const active = live().find(x => x.id === view); if (active) active.mod.paint();
   if (view !== 'ttt') return;
 
   el.status.textContent = statusText();
@@ -183,13 +199,15 @@ function wire() {
   wired = true;
   buildView();
   $('#openTtt').addEventListener('click', () => { view = 'ttt'; paint(); });
-  /* Extra games are optional here: if index.html is stale (missing a card or container) the others must still work */
+  /* A card always reacts: it opens the game, or says why it can't (still loading / files missing or out of date) */
   EXTRA.forEach(x => {
     const open = $(x.open);
-    if (open && $(x.view)) {
-      x.mod.build(() => { view = 'hub'; paint(); });
-      open.addEventListener('click', () => { view = x.id; paint(); });
-    } else console.warn('[OLW] markup for "' + x.id + '" is missing from index.html. Replace index.html and clear the cache.');
+    if (!open) return;
+    open.addEventListener('click', () => {
+      if (x.status === 'ready') { view = x.id; paint(); }
+      else if (x.status === 'loading') toast('Loading ' + x.name + '…');
+      else toast(x.name + ' didn’t load. Upload all the new files, then hard refresh (Ctrl+Shift+R).', 'error');
+    });
   });
   bus.on('tab', () => paint());
 }
@@ -198,7 +216,12 @@ export function start() {
   wire();
   view = 'hub'; loaded = false; loadError = false; celebrated = -1; busy = false;
   game = T.newGame(C(), players());
-  EXTRA.forEach(x => x.mod.start(paint));
+  const gen = ++startGen;
+  loadExtras().then(() => {
+    if (gen !== startGen || !game) return;           /* locked again before the modules arrived */
+    live().forEach(x => x.mod.start(paint));
+    paint();
+  });
   if (!fb.ready) { loaded = true; paint(); return; }
   unsub = ref().onSnapshot(doc => {
     game = T.normalize(doc.exists ? doc.data() : null, C(), players());
@@ -213,7 +236,8 @@ export function start() {
 
 export function stop() {
   if (unsub) unsub(); unsub = null;
-  EXTRA.forEach(x => x.mod.stop());
+  startGen++;
+  live().forEach(x => x.mod.stop());
   game = null; view = 'hub'; loaded = false;
   const badge = $('#gameBadge'); if (badge) { badge.textContent = '0'; badge.classList.remove('show'); }
 }
