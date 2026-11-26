@@ -4,7 +4,7 @@ import * as fb from './firebase.js';
 import { state, bus } from './state.js';
 import { $, $$, h } from './utils.js';
 
-let all = [], visible = [], kind = 'photos', unsub = null, idx = 0, wired = false, lastFocus = null;
+let all = [], visible = [], kind = 'all', unsub = null, idx = 0, wired = false, lastFocus = null;
 
 const fallback = () => CONFIG.fallbackMemories.map(m => ({ ...m }));
 
@@ -31,6 +31,7 @@ export function stop() {
 function set(list) {
   all = list;
   const videos = all.filter(m => m.type === 'video').length;
+  $('#allCount').textContent = all.length;
   $('#photoCount').textContent = all.length - videos;
   $('#videoCount').textContent = videos;
   render();
@@ -40,22 +41,34 @@ function set(list) {
 
 function render() {
   const g = $('#gallery');
-  visible = all.filter(m => (kind === 'videos') === (m.type === 'video'));
+  visible = all.filter(m => kind === 'all' || (kind === 'videos') === (m.type === 'video'));
   if (!visible.length) {
-    g.replaceChildren(h('div', { class: 'empty' }, kind === 'videos' ? 'No videos yet. Add some from the admin page 🎬' : 'No photos yet. Add some from the admin page 📷'));
+    g.replaceChildren(h('div', { class: 'empty' }, kind === 'videos' ? 'No videos yet. Add some from the admin page 🎬' : kind === 'photos' ? 'No photos yet. Add some from the admin page 📷' : 'No memories yet. Add some from the admin page 💞'));
     return;
   }
+  const canHover = !!(window.matchMedia && matchMedia('(hover: hover)').matches);
   g.replaceChildren(...visible.map((m, i) => {
     const isVideo = m.type === 'video';
     const media = isVideo
-      ? h('video', { src: m.url + '#t=0.1', muted: true, playsinline: true, preload: 'metadata', 'aria-hidden': 'true' })
+      ? h('video', { src: m.url + '#t=0.1', muted: true, loop: true, playsinline: true, preload: 'metadata', 'aria-hidden': 'true' })
       : h('img', { src: m.url, alt: m.caption || 'Memory', loading: 'lazy', decoding: 'async' });
     if (isVideo) media.muted = true;
-    return h('button', { type: 'button', class: 'tile', 'aria-label': (isVideo ? 'Play video: ' : 'Open photo: ') + (m.caption || 'memory'), onclick: () => open(i) },
+    const tile = h('button', {
+      type: 'button',
+      class: 'tile' + (isVideo ? ' is-video' : '') + (m.caption ? ' has-cap' : ''),
+      'aria-label': (isVideo ? 'Play video: ' : 'Open photo: ') + (m.caption || 'memory'),
+      onclick: () => open(i)
+    },
       media,
       isVideo ? h('div', { class: 'play-overlay' }) : null,
       isVideo ? h('div', { class: 'video-badge' }, 'VIDEO') : null,
       m.caption ? h('div', { class: 'tile__cap' }, m.caption) : null);
+    tile.style.setProperty('--i', i);
+    if (isVideo && canHover) {   // silent preview on hover (desktop)
+      tile.addEventListener('pointerenter', () => { media.play().catch(() => {}); });
+      tile.addEventListener('pointerleave', () => { media.pause(); try { media.currentTime = 0.1; } catch { /* ignore */ } });
+    }
+    return tile;
   }));
 }
 
@@ -105,6 +118,7 @@ function wire() {
     $$('.mem-tab').forEach(t => t.classList.toggle('active', t === tab));
     render();
   }));
+  $('#memShuffle').addEventListener('click', () => { if (visible.length) open(Math.floor(Math.random() * visible.length)); });
   const lb = $('#lightbox');
   $('#lbClose').addEventListener('click', () => closeLightbox());
   $('#lbPrev').addEventListener('click', e => { e.stopPropagation(); step(-1); });

@@ -63,6 +63,7 @@
     <button class="tab" data-tab="gallery" type="button"><span class="tab__icon">📷</span><span class="tab__label">Memories</span></button>
     <button class="tab" data-tab="messages" type="button"><span class="tab__icon">💬</span><span class="tab__label">Chat</span><span class="tab-badge" id="msgBadge">0</span></button>
     <button class="tab" data-tab="letters" type="button"><span class="tab__icon">💌</span><span class="tab__label">Letters</span><span class="tab-badge" id="tabBadge">0</span></button>
+    <button class="tab" data-tab="games" type="button"><span class="tab__icon">🎮</span><span class="tab__label">Games</span><span class="tab-badge" id="gameBadge">0</span></button>
     <button class="tab" data-tab="birthdays" type="button"><span class="tab__icon">🎂</span><span class="tab__label">Birthdays</span></button>
   </nav>
 
@@ -117,9 +118,13 @@
       <section class="panel" id="panel-gallery">
         <h2 class="section-title">Our memories</h2>
         <p class="section-sub">Photos and videos of us. Tap one to open it.</p>
-        <div class="mem-tabs">
-          <button class="mem-tab active" data-mem="photos" type="button">📷 Photos <span class="mem-count" id="photoCount">0</span></button>
-          <button class="mem-tab" data-mem="videos" type="button">🎬 Videos <span class="mem-count" id="videoCount">0</span></button>
+        <div class="mem-bar">
+          <div class="mem-tabs">
+            <button class="mem-tab active" data-mem="all" type="button">✨ All <span class="mem-count" id="allCount">0</span></button>
+            <button class="mem-tab" data-mem="photos" type="button">📷 Photos <span class="mem-count" id="photoCount">0</span></button>
+            <button class="mem-tab" data-mem="videos" type="button">🎬 Videos <span class="mem-count" id="videoCount">0</span></button>
+          </div>
+          <button class="btn btn--ghost btn--sm" id="memShuffle" type="button">🎲 Surprise me</button>
         </div>
         <div class="gallery" id="gallery"></div>
       </section>
@@ -172,6 +177,21 @@
           </div>
         </div>
         <div class="timeline" id="timeline"></div>
+      </section>
+
+      <!-- GAMES -->
+      <section class="panel" id="panel-games">
+        <div id="gamesHub">
+          <h2 class="section-title">Games</h2>
+          <p class="section-sub">Little things to play together.</p>
+          <div class="games-grid">
+            <button class="game-card" id="openTtt" type="button">
+              <div class="game-card__icon" aria-hidden="true">⭕</div>
+              <div class="game-card__body"><b>Tic-Tac-Toe</b><span id="tttHubSub">Tap to play</span></div>
+            </button>
+          </div>
+        </div>
+        <div id="tttView" hidden></div>
       </section>
 
       <!-- BIRTHDAYS -->

@@ -38,6 +38,7 @@ export function compute(list, now = new Date(), o = {}, bridgedArr = []) {
   const keyOf = (d, back) => dateKey(new Date(d.getFullYear(), d.getMonth(), d.getDate() - back).getTime());
 
   const todayDone = real(keyOf(now, 0));
+  const todayFrom = [...(days.get(keyOf(now, 0)) || [])];
 
   /* current streak: walk back; bridge days keep the chain but add nothing */
   let back = conn(keyOf(now, 0)) ? 0 : 1, count = 0;
@@ -72,12 +73,20 @@ export function compute(list, now = new Date(), o = {}, bridgedArr = []) {
     const k = dateKey(d.getTime());
     week.push({ label: d.toLocaleDateString(undefined, { weekday: 'narrow' }), on: real(k), fixed: !real(k) && bridged.has(k), today: i === 0 });
   }
-  return { count, best: Math.max(best, count), todayDone, week, restorable };
+  return { count, best: Math.max(best, count), todayDone, todayFrom, week, restorable };
 }
 
 function timeLeft(now) {
   const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1) - now;
   return Math.floor(end / 36e5) + 'h ' + Math.floor(end / 6e4) % 60 + 'm left today';
+}
+
+function pendingText(s, room) {
+  if (!opts().needBoth || !room) return 'Send something today to keep it going';
+  const meSent = s.todayFrom.includes(room.id), theySent = s.todayFrom.includes(room.partner.toLowerCase());
+  if (meSent && !theySent) return 'You’ve texted today. Waiting for ' + room.partner + ' 💞';
+  if (!meSent && theySent) return room.partner + ' texted today. Your turn! 💞';
+  return 'You both need to text today to keep it going';
 }
 
 function paint() {
@@ -94,7 +103,7 @@ function paint() {
   set('streakSub', s.restorable && s.count === 0
     ? 'Your ' + s.restorable.prev + '-day streak ended. You can bring it back'
     : s.count === 0 ? 'Send a message or letter to start your streak'
-    : s.todayDone ? 'Kept for today. See you tomorrow 💞' : 'Send something today to keep it going');
+    : s.todayDone ? 'Kept for today. See you tomorrow 💞' : pendingText(s, room));
   set('streakLeft', s.todayDone || s.count === 0 ? '' : timeLeft(now));
 
   if (room) {
