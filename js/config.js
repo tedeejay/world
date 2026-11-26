@@ -4,6 +4,10 @@
 export const CONFIG = {
   appUrl: 'https://tedeejay.github.io/Jay-Dee/',
   streakNeedsBoth: false,                 // false: any message/letter keeps the streak; true: both of you must send each day
+  streakRestores: 5,                      // restores each person gets in total
+  restoreMaxGapDays: 2,                   // longest break that can be restored
+  restoreMinStreak: 3,                    // streak must have been at least this long
+  restoreWindowDays: 2,                   // how recent the break must be
   togetherSince: '2026-10-03',            // YYYY-MM-DD
   logo: 'https://cdn.dbimg.app/Q7cRoVmy.png',
   lockBg: 'https://cdn.dbimg.app/baOgBUVC.jpg',

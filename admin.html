@@ -40,6 +40,15 @@
     </section>
 
     <section class="card admin-card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
+        <h3 style="font-family:var(--font-display);flex:1">🗑 Deleted messages <span class="muted" id="trashCount"></span></h3>
+        <button class="btn btn--ghost btn--sm" id="trashAll" type="button" hidden>Delete all forever</button>
+      </div>
+      <p class="muted" style="font-size:.78rem;margin-bottom:14px">Hidden from the chat but still stored. Deleting here is permanent.</p>
+      <div class="mem-list" id="trashList"></div>
+    </section>
+
+    <section class="card admin-card">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
         <h3 style="font-family:var(--font-display);flex:1">Your memories <span class="muted" id="memCount"></span></h3>
         <button class="btn btn--ghost btn--sm" id="seedBtn" type="button" hidden>Import the default set</button>

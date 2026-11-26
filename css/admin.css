@@ -26,3 +26,9 @@ body.admin{overflow:auto;height:auto;min-height:100%}
   .mem-row__thumb{width:64px;height:64px}
   .mem-row__btns{grid-column:1/-1;flex-direction:row}
 }
+.trash-row{padding:14px;border-radius:18px;background:var(--glass-2);border:1px solid var(--stroke);display:grid;gap:10px}
+.trash-row__head{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.72rem;color:var(--muted)}
+.trash-row__head b{color:var(--pink-soft);font-weight:600}
+.trash-row__body{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.9rem;line-height:1.5;max-height:180px;overflow:auto}
+.trash-row audio{width:100%;max-width:300px;height:38px}
+.trash-row__btns{display:flex;justify-content:flex-end}

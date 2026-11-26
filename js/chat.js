@@ -16,6 +16,7 @@ const HEART = '❤️';
 const coarse = window.matchMedia && matchMedia('(pointer: coarse)').matches;
 
 let messages = [];
+let allMsgs = [];   // includes soft-deleted ones (streak counts them; admin can purge them)
 let unsubs = [];
 let timers = [];
 let caches = {};
@@ -156,7 +157,7 @@ function sigOf(m) {
   return [m.type, m.type === 'voice' ? m.id : m.text, m.edited ? 1 : 0, JSON.stringify(m.reactions), editingId === m.id ? 'E' : '', isOwn(m) ? 1 : 0, m.ts].join('|');
 }
 
-function renderAll() { renderChat(); renderLetters(); bus.emit('messages', messages); }
+function renderAll() { renderChat(); renderLetters(); bus.emit('messages', allMsgs.length ? allMsgs : messages); }
 
 function renderChat() {
   const tl = $('#msgTimeline');
@@ -310,10 +311,10 @@ function saveEdit(m, raw) {
 
 async function deleteMessage(m) {
   const preview = m.type === 'voice' ? '🎤 Voice note' : truncate(m.text || 'Message', 80);
-  const ok = await confirmDialog({ title: 'Delete this ' + (isLetter(m) ? 'letter' : 'message') + '?', body: '“' + preview + '”\n\nThis can’t be undone.', ok: 'Delete', danger: true });
+  const ok = await confirmDialog({ title: 'Delete this ' + (isLetter(m) ? 'letter' : 'message') + '?', body: '“' + preview + '”\n\nIt will be removed from the chat.', ok: 'Delete', danger: true });
   if (!ok) return;
   if (!fb.ready) { messages = messages.filter(x => x.id !== m.id); renderAll(); updateNotification(); toast('Deleted ✔', 'success'); return; }
-  fb.db.collection('messages').doc(m.id).delete().then(() => toast('Deleted ✔', 'success')).catch(err => handleError(err, 'delete'));
+  fb.db.collection('messages').doc(m.id).update({ deleted: true, deletedAt: fb.serverTs(), deletedBy: me().id }).then(() => toast('Deleted ✔', 'success')).catch(err => handleError(err, 'delete'));
 }
 
 function toggleReact(m, evt) {
@@ -342,7 +343,7 @@ function send(type, text) {
 /* ───────── realtime ───────── */
 const fromDoc = doc => {
   const d = doc.data({ serverTimestamps: 'estimate' });
-  return { id: doc.id, from: d.from || 'them', type: d.type || 'chat', ts: d.ts ? d.ts.toMillis() : Date.now(), text: d.text || '', edited: !!d.edited, reactions: d.reactions || {} };
+  return { id: doc.id, from: d.from || 'them', type: d.type || 'chat', ts: d.ts ? d.ts.toMillis() : Date.now(), text: d.text || '', edited: !!d.edited, reactions: d.reactions || {}, deleted: !!d.deleted };
 };
 
 function incoming(m) {
@@ -360,7 +361,8 @@ function loadMessages() {
     renderAll(); updateNotification(); return;
   }
   unsubs.push(fb.db.collection('messages').orderBy('ts', 'asc').onSnapshot(snap => {
-    messages = snap.docs.map(fromDoc);
+    allMsgs = snap.docs.map(fromDoc);
+    messages = allMsgs.filter(m => !m.deleted);
     if (!firstSnap) {
       snap.docChanges().forEach(ch => {
         if (ch.type !== 'added' || ch.doc.metadata.hasPendingWrites) return;
@@ -521,7 +523,7 @@ export function stop(prevRoom) {
   unsubs = [];
   timers.forEach(clearInterval); timers = [];
   if (fb.ready && prevRoom) fb.db.collection('presence').doc(prevRoom.id).set({ online: false, typingAt: 0, lastSeen: Date.now() }, { merge: true }).catch(() => {});
-  messages = []; caches = {}; editingId = null; dividers = { msg: null, letter: null };
+  messages = []; allMsgs = []; caches = {}; editingId = null; dividers = { msg: null, letter: null };
   partner = { lastReadMsg: 0, lastReadLetter: 0, online: false, lastSeen: 0, typingAt: 0 };
   ['#msgTimeline', '#timeline'].forEach(s => { const el = $(s); if (el) el.replaceChildren(); });
   setBadge('msgBadge', 0); setBadge('tabBadge', 0);

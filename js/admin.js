@@ -30,6 +30,8 @@ function init() {
     $('#adminBannerText').textContent = 'Could not read memories (' + (err.code || 'error') + '). Check your Firestore rules.';
   });
 
+  initTrash();
+
   function render() {
     $('#memCount').textContent = '(' + items.length + ')';
     $('#seedBtn').hidden = items.length > 0;
@@ -69,5 +71,59 @@ function init() {
     const batch = fb.db.batch();
     CONFIG.fallbackMemories.forEach((m, i) => batch.set(col.doc(), { url: m.url, type: m.type, caption: m.caption, order: i + 1, createdAt: fb.serverTs() }));
     try { await batch.commit(); toast('Imported ✔', 'success'); } catch (e) { toast('Import failed: ' + (e.code || e.message), 'error'); }
+  });
+}
+
+/* ── deleted messages: view + permanent delete ── */
+function initTrash() {
+  const col = fb.db.collection('messages');
+  const NAMES = { jay: 'Jay', dee: 'Dee' };
+  const ms = t => (t && t.toMillis ? t.toMillis() : 0);
+  const when = t => (ms(t) ? new Date(ms(t)).toLocaleString() : 'unknown time');
+  let rows = [];
+
+  col.where('deleted', '==', true).onSnapshot(snap => {
+    rows = snap.docs.map(d => ({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) })).sort((a, b) => ms(b.deletedAt) - ms(a.deletedAt));
+    renderTrash();
+  }, err => {
+    $('#adminBanner').hidden = false;
+    $('#adminBannerText').textContent = 'Could not read deleted messages (' + (err.code || 'error') + '). Check your Firestore rules.';
+  });
+
+  function renderTrash() {
+    $('#trashCount').textContent = '(' + rows.length + ')';
+    $('#trashAll').hidden = !rows.length;
+    const list = $('#trashList');
+    if (!rows.length) { list.replaceChildren(h('div', { class: 'empty' }, 'Nothing deleted 🎉')); return; }
+    list.replaceChildren(...rows.map(r => {
+      const body = r.type === 'voice'
+        ? h('audio', { controls: true, preload: 'none', src: r.text || '' })
+        : h('div', { class: 'trash-row__body' }, r.text || '');
+      return h('div', { class: 'trash-row' },
+        h('div', { class: 'trash-row__head' },
+          h('span', null, 'From ', h('b', null, NAMES[r.from] || r.from || '?')),
+          h('span', null, r.type === 'letter' ? '💌 Letter' : r.type === 'voice' ? '🎤 Voice note' : '💬 Message'),
+          h('span', null, 'Sent ' + when(r.ts)),
+          h('span', null, 'Deleted by ', h('b', null, NAMES[r.deletedBy] || r.deletedBy || '?'), ' · ' + when(r.deletedAt))),
+        body,
+        h('div', { class: 'trash-row__btns' },
+          h('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: async () => {
+            if (!(await confirmDialog({ title: 'Delete forever?', body: 'This permanently removes it. It can’t be recovered.', ok: 'Delete forever', danger: true }))) return;
+            col.doc(r.id).delete().then(() => toast('Deleted forever ✔', 'success')).catch(e => toast('Delete failed: ' + (e.code || e.message), 'error'));
+          } }, 'Delete forever')));
+    }));
+  }
+
+  $('#trashAll').addEventListener('click', async () => {
+    if (!rows.length) return;
+    if (!(await confirmDialog({ title: 'Delete all ' + rows.length + ' forever?', body: 'Every deleted message and letter will be permanently removed.', ok: 'Delete all', danger: true }))) return;
+    try {
+      for (let i = 0; i < rows.length; i += 400) {
+        const batch = fb.db.batch();
+        rows.slice(i, i + 400).forEach(r => batch.delete(col.doc(r.id)));
+        await batch.commit();
+      }
+      toast('Deleted forever ✔', 'success');
+    } catch (e) { toast('Delete failed: ' + (e.code || e.message), 'error'); }
   });
 }

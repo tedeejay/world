@@ -147,3 +147,6 @@
 .card--streak.is-lit{border-color:rgba(255,158,194,.5);box-shadow:0 20px 54px rgba(255,120,170,.22)}
 .card--streak.is-lit .ms b{text-shadow:0 0 22px rgba(255,120,170,.7)}
 .card--streak.is-risk .ms-foot span:last-child{color:#ffb3c6;font-weight:600}
+.sd.fixed i{background:rgba(168,184,247,.18);border-color:rgba(168,184,247,.5)}
+.streak-restore{width:100%;margin-top:14px}
+.streak-info{font-size:.68rem;color:var(--muted);margin-top:10px;text-align:center}
